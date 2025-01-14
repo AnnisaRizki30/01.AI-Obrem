@@ -1,0 +1,12 @@
+gradio==3.50.2
+huggingface_hub==0.24.7
+jax==0.4.23
+jaxlib==0.4.23
+diffusers==0.14.0 
+xformers 
+transformers 
+scipy 
+ftfy 
+accelerate 
+controlnet_aux
+opencv-contrib-python
