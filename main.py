@@ -16,7 +16,7 @@ pipe_obrem.scheduler = DEISMultistepScheduler.from_config(pipe_obrem.scheduler.c
 pipe_obrem.enable_xformers_memory_efficient_attention()
 pipe_obrem.to('cuda')
 
-def resize_image_obrem(image, target_size):
+def resize_image(image, target_size):
     width, height = image.size
     aspect_ratio = float(width) / float(height)
     if width > height:
