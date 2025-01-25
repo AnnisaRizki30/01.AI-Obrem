@@ -30,7 +30,7 @@ def resize_image(image, target_size):
         new_height = target_size
     return image.resize((new_width, new_height), Image.BICUBIC)
 
-def inference_obrem(input_dict, prompt):
+def inference_obrem(input_dict):
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
 
@@ -61,7 +61,7 @@ def inference_obrem(input_dict, prompt):
     with torch.no_grad():
         with torch.cuda.amp.autocast(): 
             output = pipe_obrem(
-                prompt=prompt,  
+                prompt='',  
                 num_inference_steps=50,
                 generator=generator,
                 image=blended_image_np,
