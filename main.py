@@ -128,6 +128,8 @@ def inference_obrem(input_dict):
     blended_image_np = image_np * (1 - mask_np)[:, :, None] + inpainted_image_np * mask_np[:, :, None]
 
     blended_image = Image.fromarray(np.uint8(blended_image_np))
+    if blended_image.mode == 'RGBA':
+        blended_image = blended_image.convert('RGB')
 
     blended_image_np = np.array(blended_image)
     low_threshold = 800
@@ -142,7 +144,7 @@ def inference_obrem(input_dict):
         with torch.cuda.amp.autocast(): 
             output = pipe_obrem(
                 prompt='',  
-                num_inference_steps=50,
+                num_inference_steps=20,
                 generator=generator,
                 image=blended_image_np,
                 control_image=canny_image,
