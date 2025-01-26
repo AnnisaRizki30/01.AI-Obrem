@@ -149,5 +149,7 @@ def inference_obrem(input_dict):
                 controlnet_conditioning_scale=0.9,
                 mask_image=input_image
             ).images[0]
-    
-    return output
+            
+    upscaled_image = upscaler(np.array(output))
+
+    return upscaled_image
