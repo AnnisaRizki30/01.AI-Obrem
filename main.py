@@ -1,13 +1,6 @@
 import sys
 import os
 sys.path.append(os.path.abspath(os.path.dirname(__file__)))
-from torchvision.transforms import functional
-sys.modules["torchvision.transforms.functional_tensor"] = functional
-
-from basicsr.archs.srvgg_arch import SRVGGNetCompact
-from gfpgan.utils import GFPGANer
-from realesrgan.utils import RealESRGANer
-
 import torch
 from torch.cuda.amp import autocast
 import cv2
@@ -15,11 +8,6 @@ from PIL import Image
 import numpy as np
 from src.pipeline_stable_diffusion_controlnet_inpaint import *
 from diffusers import StableDiffusionInpaintPipeline, ControlNetModel, DEISMultistepScheduler
-
-import warnings
-warnings.simplefilter("ignore", category=FutureWarning)
-warnings.simplefilter("ignore", category=UserWarning)
-warnings.simplefilter("ignore", category=SyntaxWarning)
 
 
 # Load the model
@@ -43,72 +31,6 @@ def resize_image(image, target_size):
     return image.resize((new_width, new_height), Image.BICUBIC)
 
 
-def upscaler(img):
-    try:
-        if not isinstance(img, np.ndarray):
-            raise ValueError("Input image is not a valid NumPy array.")
-        
-        model_path = 'image_upscaler/realesr-general-x4v3.pth'
-        half = True if torch.cuda.is_available() else False
-
-        model = SRVGGNetCompact(num_in_ch=3, num_out_ch=3, num_feat=64, num_conv=32, upscale=4, act_type='prelu')
-        upsampler = RealESRGANer(scale=4, model_path=model_path, model=model, tile=0, tile_pad=10, pre_pad=0, half=half)
-
-        img = img.astype(np.uint8)
-        if len(img.shape) == 3 and img.shape[2] == 4:
-            img_mode = 'RGBA'
-        elif len(img.shape) == 2:
-            img_mode = None
-            img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
-        else:
-            img_mode = None
-
-        h, w = img.shape[0:2]
-        if h < 300:
-            img = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_LANCZOS4)
-
-        try:
-            face_enhancer = GFPGANer(
-                model_path='image_upscaler/GFPGANv1.4.pth',
-                upscale=10,
-                arch='clean',
-                channel_multiplier=2,
-                bg_upsampler=upsampler
-            )
-        except Exception as e:
-            print("Error initializing GFPGANer:", e)
-            return {"error": f"Error initializing GFPGANer: {str(error)}"}
-
-        try:
-            with torch.no_grad():
-                with autocast():
-                     enhance_result = face_enhancer.enhance(img, has_aligned=False, only_center_face=False, paste_back=True)
-                     if isinstance(enhance_result, tuple) and len(enhance_result) == 3:
-                          _, _, output = enhance_result
-                     else:
-                        raise ValueError("Unexpected output from face_enhancer.enhance")
-        except RuntimeError as error:
-            print('Error during enhancement:', error)
-        except Exception as error:
-            print("Unexpected error during enhancement:", error)
-
-        if output is None:
-            raise ValueError("Enhancement failed, output is None.")
-
-        interpolation = cv2.INTER_LANCZOS4
-        h, w = img.shape[0:2]
-        output = cv2.resize(output, (int(w * 10 / 2), int(h * 10 / 2)), interpolation=interpolation)
-        if len(output.shape) == 3 and output.shape[2] == 3:
-            pass  
-        else:
-            output = cv2.cvtColor(output, cv2.COLOR_BGR2RGB)
-        return output 
-    
-    except Exception as error:
-        print('Global exception:', error)
-        return {"error": f"Global exception: {str(error)}"}
-        
-
 def inference_obrem(input_dict):
     torch.cuda.empty_cache()
     torch.cuda.ipc_collect()
@@ -128,9 +50,6 @@ def inference_obrem(input_dict):
     blended_image_np = image_np * (1 - mask_np)[:, :, None] + inpainted_image_np * mask_np[:, :, None]
 
     blended_image = Image.fromarray(np.uint8(blended_image_np))
-    if blended_image.mode == 'RGBA':
-        blended_image = blended_image.convert('RGB')
-
     blended_image_np = np.array(blended_image)
     low_threshold = 800
     high_threshold = 900
@@ -151,10 +70,5 @@ def inference_obrem(input_dict):
                 controlnet_conditioning_scale=0.9,
                 mask_image=input_image
             ).images[0]
-            
-    upscaled_image = upscaler(np.array(output))
 
-    if len(upscaled_image.shape) == 3 and upscaled_image.shape[2] == 3:
-        upscaled_image = cv2.cvtColor(upscaled_image, cv2.COLOR_BGR2RGB)
-
-    return upscaled_image
+    return output
