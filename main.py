@@ -152,4 +152,7 @@ def inference_obrem(input_dict):
             
     upscaled_image = upscaler(np.array(output))
 
+    if len(upscaled_image.shape) == 3 and upscaled_image.shape[2] == 3:
+        upscaled_image = cv2.cvtColor(upscaled_image, cv2.COLOR_BGR2RGB)
+
     return upscaled_image
