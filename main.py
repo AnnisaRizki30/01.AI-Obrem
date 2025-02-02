@@ -59,8 +59,8 @@ def inference_obrem(input_dict):
     canny_image = Image.fromarray(canny)
 
     generator = torch.manual_seed(0)
-    with torch.no_grad():
-        with torch.cuda.amp.autocast(): 
+    with torch.inference_mode():
+        with torch.autocast(): 
             output = pipe_obrem(
                 prompt='',  
                 num_inference_steps=20,
