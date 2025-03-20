@@ -1,8 +1,4 @@
-# UnpromptedControl
-
-**By sponsoring me, you're not just supporting my work - you're helping to create a more collaborative, innovative open source community 💖 [sponsor](https://github.com/sponsors/vijishmadhavan?o=sd&sc=t).**
-
-[Get more updates on Twitter](https://twitter.com/Vijish68859437)
+# 01.AI-Obrem
 
 ControlNet is a highly regarded tool for guiding StableDiffusion models, and it has been widely acknowledged for its effectiveness. In this repository, A simple hack that allows for the restoration or removal of objects without requiring user prompts. By leveraging this approach, the workflow can be significantly streamlined, leading to enhanced process efficiency.
 
